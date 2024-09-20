@@ -8,7 +8,7 @@ import sympy as sp
 import sys
 
 # Import constants from your specific path
-sys.path.append('/Users/blakejohnson/Documents/Thesis/Three Body Problem')
+#sys.path.append('/Users/blakejohnson/Documents/Thesis/Three Body Problem')
 from constants import *
 
 """
@@ -58,14 +58,14 @@ E2_sp = -mu_2d / (2 * a2_m)  # Specific orbital energy in J/kg
 #curtis p.84 (2.83)
 T2_orbit = (2 * math.pi / math.sqrt(mu_2d)) * (a2_m ** (3 / 2))  # Orbital period in seconds
 
-# Output the results
-print(f"Radius at perigee: {rp2_km:.2f} km")
-print(f"Radius at perigee: {rp2_m:.2f} m")
-print(f"Semi-minor axis: {b2_km:.2f} km")
-print(f"Angular momentum: {h2_p:.2e} m^2/s")
-print(f"Velocity at perigee: {v2_p:.2f} m/s")
-print(f"Specific orbital energy: {E2_sp:.2e} J/kg")
-print(f"Orbital period: {T2_orbit:.2f} s")
+if __name__ == '__main__':
+    print(f"Radius at perigee: {rp2_km:.2f} km")
+    print(f"Radius at perigee: {rp2_m:.2f} m")
+    print(f"Semi-minor axis: {b2_km:.2f} km")
+    print(f"Angular momentum: {h2_p:.2e} m^2/s")
+    print(f"Velocity at perigee: {v2_p:.2f} m/s")
+    print(f"Specific orbital energy: {E2_sp:.2e} J/kg")
+    print(f"Orbital period: {T2_orbit:.2f} s")
 
 
 """  
@@ -172,28 +172,29 @@ sol = odeint(dfdt, f0, tspan)
 # Convert position from meters to kilometers for plotting
 sol_km = sol[:, :3] / 1000
 
+if __name__ == '__main__':
 
-"""
-Plot the results:
+    """
+    Plot the results:
 
-Finally I plotted the results. I set the position in the x-axis as sol_km[0] and y-position as sol_km[1].
-I set Triton and its orbit to be a brown color and Neptune to be a Blue Color. I want this to be consistent during the entire project
-I added axis and units and a legend in the bottom.
-"""
-# Plotting the trajectory
-plt.figure()
-plt.plot(sol_km[:, 0], sol_km[:, 1], color='saddlebrown', label="Triton's Orbit")
-plt.scatter(0, 0, color='blue', s=50, label='Neptune')  # Neptune at the origin
-plt.scatter(sol_km[0, 0], sol_km[0, 1], color='saddlebrown', s=30, label='Triton at Perigee')  # Triton at initial position
+    Finally I plotted the results. I set the position in the x-axis as sol_km[0] and y-position as sol_km[1].
+    I set Triton and its orbit to be a brown color and Neptune to be a Blue Color. I want this to be consistent during the entire project
+    I added axis and units and a legend in the bottom.
+    """
+    # Plotting the trajectory
+    plt.figure()
+    plt.plot(sol_km[:, 0], sol_km[:, 1], color='saddlebrown', label="Triton's Orbit")
+    plt.scatter(0, 0, color='blue', s=50, label='Neptune')  # Neptune at the origin
+    plt.scatter(sol_km[0, 0], sol_km[0, 1], color='saddlebrown', s=30, label='Triton at Perigee')  # Triton at initial position
 
-# Plotting settings
-plt.xlabel("x (km)")
-plt.ylabel("y (km)")
-plt.legend(loc='upper right')
-plt.title("Triton's Orbit around Neptune")
-plt.grid()
-plt.axis()
-plt.show()
+    # Plotting settings
+    plt.xlabel("x (km)")
+    plt.ylabel("y (km)")
+    plt.legend(loc='upper right')
+    plt.title("Triton's Orbit around Neptune")
+    plt.grid()
+    plt.axis()
+    plt.show()
 
 
 
