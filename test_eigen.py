@@ -11,8 +11,7 @@ import sys
 
 from part_5 import *
 
-
-# Function to calculate and return the second partial derivatives Uxx, Uxy, Uyy
+# Function to calculate and print the second partial derivatives Uxx, Uxy, Uyy
 def dU():
     x, y, mu = sp.symbols('x y mu')
     r1 = sp.sqrt((x + mu)**2 + y**2)
@@ -27,17 +26,12 @@ def dU():
 
 # Function to calculate the second partial derivatives Uxx, Uxy, Uyy with given values
 def ddU(x_val, y_val, mu_val):
-    Uxx, Uxy, Uyy = dU()  # Calculate the symbolic derivatives
+    Uxx, Uxy, Uyy = dU()
     Uxx_val = Uxx.subs({sp.symbols('x'): x_val, sp.symbols('y'): y_val, sp.symbols('mu'): mu_val})
     Uxy_val = Uxy.subs({sp.symbols('x'): x_val, sp.symbols('y'): y_val, sp.symbols('mu'): mu_val})
     Uyy_val = Uyy.subs({sp.symbols('x'): x_val, sp.symbols('y'): y_val, sp.symbols('mu'): mu_val})
     
-    # Convert to real part or keep as complex
-    Uxx_val = complex(Uxx_val)
-    Uxy_val = complex(Uxy_val)
-    Uyy_val = complex(Uyy_val)
-    
-    return Uxx_val, Uxy_val, Uyy_val
+    return float(Uxx_val), float(Uxy_val), float(Uyy_val)
 
 # Function to round small numbers to zero based on a threshold
 def round_small_numbers_to_zero(value, threshold=1e-10):
@@ -79,36 +73,19 @@ def eigenvalues(x_val, y_val, mu_val):
     
     return eigenvalues
 
-# Function to determine stability based on eigenvalues
-def check_stability(eigenvalues):
-    # Check the real parts of the eigenvalues
-    for eigenvalue in eigenvalues:
-        real_part = sp.re(eigenvalue)
-        if real_part > 0:
-            return "Unstable"
-    return "Stable"
+# Example usage with specific values
+x_val = 0.848
+y_val = 0
+mu_val = 0.01
 
-# List of Lagrange points (assuming you have these values pre-calculated)
-Lagrange_points = [L1, L2, L3, L4, L5]
+eigenvalues_result = eigenvalues(x_val, y_val, mu_val)
 
-# Loop over the Lagrange points and compute eigenvalues for each
-for i, L in enumerate(Lagrange_points, start=1):
-    x_val, y_val = L[0], L[1]
-    print(f"Calculating eigenvalues for L{i} at (x = {x_val}, y = {y_val})")
-    
-    # Call your original eigenvalues function
-    eigenvalues_result = eigenvalues(x_val, y_val, mu)
-    
-    # Round small components of eigenvalues
-    rounded_eigenvalues = round_eigenvalues(eigenvalues_result)
-    
-    # Determine stability based on eigenvalues
-    stability = check_stability(rounded_eigenvalues)
-    
-    # Display the rounded eigenvalues
-    print(f"Rounded Eigenvalues for L{i}:")
-    for eigenvalue in rounded_eigenvalues:
-        sp.pprint(eigenvalue, use_unicode=True)
-    
-    # Display the stability result
-    print(f"L{i} is {stability}\n")
+# Round small components of eigenvalues
+rounded_eigenvalues = round_eigenvalues(eigenvalues_result)
+
+# Display the rounded eigenvalues with more precision
+print("Rounded Eigenvalues:")
+for eigenvalue in rounded_eigenvalues:
+    sp.pprint(eigenvalue, use_unicode=True)
+
+

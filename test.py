@@ -8,92 +8,118 @@ from mpl_toolkits.mplot3d import Axes3D
 import sympy as sp
 import sys
 
-# Import equations from parts 1 and 2
-sys.path.append('/Users/blakejohnson/Documents/Thesis/Three Body Problem')
-from part_3 import *
 
-# Function to find Lagrange points
-def find_Lagrange_points(mu):
-    def find_L1(mu):
-        initial_guess = np.array([0.5 - mu, 0.0, 0.0])
-        sol = root(lambda coords: gradient_U(*coords, mu), initial_guess)
-        if sol.success:
-            return sol.x
-        else:
-            raise ValueError(f"Failed to find L1: {sol.message}")
+from part_5 import *
 
-    def find_L2(mu):
-        initial_guess = np.array([1.5 - mu, 0.0, 0.0])  # Adjusted initial guess
-        sol = root(lambda coords: gradient_U(*coords, mu), initial_guess)
-        if sol.success:
-            return sol.x
-        else:
-            raise ValueError(f"Failed to find L2: {sol.message}")
+# Define mass ratio for Earth-Moon system
+mu = 0.01215  # Earth-Moon mass ratio
 
-    def find_L3(mu):
-        initial_guess = np.array([-1.0 - mu, 0.0, 0.0])  # Adjusted initial guess
-        sol = root(lambda coords: gradient_U(*coords, mu), initial_guess)
-        if sol.success:
-            return sol.x
-        else:
-            raise ValueError(f"Failed to find L3: {sol.message}")
+# Approximate Lagrange point positions (in normalized units, distances are relative to the Earth-Moon distance)
+# L1, L2, L3 are along the line connecting Earth and Moon
+L1 = [0.836, 0]  # Rough estimate of L1 position
+L2 = [1.155, 0]  # Rough estimate of L2 position
+L3 = [-1.005, 0]  # Rough estimate of L3 position
+L4 = [0.5, np.sqrt(3)/2]  # Approximate triangular point (L4)
+L5 = [0.5, -np.sqrt(3)/2]  # Approximate triangular point (L5)
 
-    def find_L4(mu):
-        initial_guess = np.array([0.5 - mu, np.sqrt(3)/2, 0.0])
-        sol = root(lambda coords: gradient_U(*coords, mu), initial_guess)
-        if sol.success:
-            return sol.x
-        else:
-            raise ValueError(f"Failed to find L4: {sol.message}")
+# Function to calculate and return the second partial derivatives Uxx, Uxy, Uyy
+def dU():
+    x, y, mu = sp.symbols('x y mu')
+    r1 = sp.sqrt((x + mu)**2 + y**2)
+    r2 = sp.sqrt((x + mu - 1)**2 + y**2)
+    U_sym = 0.5 * (x**2 + y**2) + (1 - mu) / r1 + mu / r2
+    
+    Uxx = sp.diff(U_sym, x, x)
+    Uxy = sp.diff(U_sym, x, y)
+    Uyy = sp.diff(U_sym, y, y)
+    
+    return Uxx, Uxy, Uyy
 
-    def find_L5(mu):
-        initial_guess = np.array([0.5 - mu, -np.sqrt(3)/2, 0.0])
-        sol = root(lambda coords: gradient_U(*coords, mu), initial_guess)
-        if sol.success:
-            return sol.x
-        else:
-            raise ValueError(f"Failed to find L5: {sol.message}")
+# Function to calculate the second partial derivatives Uxx, Uxy, Uyy with given values
+def ddU(x_val, y_val, mu_val):
+    Uxx, Uxy, Uyy = dU()  # Calculate the symbolic derivatives
+    Uxx_val = Uxx.subs({sp.symbols('x'): x_val, sp.symbols('y'): y_val, sp.symbols('mu'): mu_val})
+    Uxy_val = Uxy.subs({sp.symbols('x'): x_val, sp.symbols('y'): y_val, sp.symbols('mu'): mu_val})
+    Uyy_val = Uyy.subs({sp.symbols('x'): x_val, sp.symbols('y'): y_val, sp.symbols('mu'): mu_val})
+    
+    # Convert to real part or keep as complex
+    Uxx_val = complex(Uxx_val)
+    Uxy_val = complex(Uxy_val)
+    Uyy_val = complex(Uyy_val)
+    
+    return Uxx_val, Uxy_val, Uyy_val
 
-    L1_position = find_L1(mu)
-    L2_position = find_L2(mu)
-    L3_position = find_L3(mu)
-    L4_position = find_L4(mu)
-    L5_position = find_L5(mu)
+# Function to round small numbers to zero based on a threshold
+def round_small_numbers_to_zero(value, threshold=1e-10):
+    if abs(value) < threshold:
+        return 0
+    else:
+        return value
 
-    return L1_position, L2_position, L3_position, L4_position, L5_position
+# Function to round small components of eigenvalues
+def round_eigenvalues(eigenvalues, threshold=1e-10):
+    rounded_eigenvalues = []
+    for eigenvalue in eigenvalues:
+        real_part = round_small_numbers_to_zero(sp.re(eigenvalue), threshold)
+        imag_part = round_small_numbers_to_zero(sp.im(eigenvalue), threshold)
+        rounded_eigenvalues.append(real_part + imag_part * sp.I)
+    return rounded_eigenvalues
 
-# Calculate Lagrange points
-L1, L2, L3, L4, L5 = find_Lagrange_points(mu)
+# Function to calculate the eigenvalues of the system matrix
+def eigenvalues(x_val, y_val, mu_val):
+    Uxx_val, Uxy_val, Uyy_val = ddU(x_val, y_val, mu_val)
+    
+    # Print Uxx, Uxy, Uyy values for inspection
+    print(f"Uxx: {Uxx_val}, Uxy: {Uxy_val}, Uyy: {Uyy_val}")
+    
+    # Define the matrix A
+    A = sp.Matrix([
+        [0, 0, 1, 0],
+        [0, 0, 0, 1],
+        [Uxx_val, Uxy_val, 0, 2],
+        [Uxy_val, Uyy_val, -2, 0]
+    ])
+    
+    # Print matrix A for inspection
+    print("Matrix A:")
+    sp.pprint(A, use_unicode=True)
+    
+    # Calculate the eigenvalues of matrix A
+    eigenvalues = A.eigenvals()
+    
+    return eigenvalues
 
-# Plot Neptune, Triton, and all Lagrange points in 2D
-neptune_position = np.array([0.0, 0.0])
-triton_position = np.array([1.0, 0.0])
+# Function to determine stability based on eigenvalues
+def check_stability(eigenvalues):
+    # Check the real parts of the eigenvalues
+    for eigenvalue in eigenvalues:
+        real_part = sp.re(eigenvalue)
+        if real_part > 0:
+            return "Unstable"
+    return "Stable"
 
-plt.figure(figsize=(10, 8))
-plt.scatter(neptune_position[0], neptune_position[1], color='blue', label='Neptune')
-plt.scatter(triton_position[0], triton_position[1], color='saddlebrown', label='Triton')
-plt.scatter(L1[0], L1[1], color='black', label='L1')
-plt.scatter(L2[0], L2[1], color='black', label='L2')
-plt.scatter(L3[0], L3[1], color='black', label='L3')
-plt.scatter(L4[0], L4[1], color='black', label='L4')
-plt.scatter(L5[0], L5[1], color='red', label='L5')
+# List of Lagrange points (assuming you have these values pre-calculated)
+Lagrange_points = [L1, L2, L3, L4, L5]
 
-plt.text(neptune_position[0], neptune_position[1], ' Neptune', fontsize=12, ha='center', va='bottom')
-plt.text(triton_position[0], triton_position[1], ' Triton', fontsize=12, ha='center', va='bottom')
-plt.text(L1[0], L1[1], 'L1', fontsize=12, ha='center', va='top')
-plt.text(L2[0], L2[1], 'L2', fontsize=12, ha='center', va='top')
-plt.text(L3[0], L3[1], 'L3', fontsize=12, ha='center', va='top')
-plt.text(L4[0], L4[1], 'L4', fontsize=12, ha='center', va='top')
-plt.text(L5[0], L5[1], 'L5', fontsize=12, ha='center', va='top')
+# Loop over the Lagrange points and compute eigenvalues for each
+for i, L in enumerate(Lagrange_points, start=1):
+    x_val, y_val = L[0], L[1]
+    print(f"Calculating eigenvalues for L{i} at (x = {x_val}, y = {y_val})")
+    
+    # Call your original eigenvalues function
+    eigenvalues_result = eigenvalues(x_val, y_val, mu)
+    
+    # Round small components of eigenvalues
+    rounded_eigenvalues = round_eigenvalues(eigenvalues_result)
+    
+    # Determine stability based on eigenvalues
+    stability = check_stability(rounded_eigenvalues)
+    
+    # Display the rounded eigenvalues
+    print(f"Rounded Eigenvalues for L{i}:")
+    for eigenvalue in rounded_eigenvalues:
+        sp.pprint(eigenvalue, use_unicode=True)
+    
+    # Display the stability result
+    print(f"L{i} is {stability}\n")
 
-plt.xlabel('Distance in unitless dimensions')
-plt.ylabel('Distance in unitless dimensions')
-plt.title('Positions of Lagrange Points with Neptune and Triton')
-plt.legend()
-plt.grid(True)
-
-# Adjust the limits to zoom out
-# plt.xlim(-1.5, 2.5)
-# plt.ylim(-1.5, 1.5)
-
-plt.show()
